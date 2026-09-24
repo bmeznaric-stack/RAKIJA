@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Rakija Optimizer PRO</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<meta name="theme-color" content="#6b3a12">
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+padding:12px;
+font-family:Arial,sans-serif;
+background:#f3e2c0;
+color:#3b1f08;
+}
+.app{
+max-width:480px;
+margin:auto;
+}
+.header{
+text-align:center;
+padding:10px;
+}
+.logo{font-size:44px}
+h1{font-size:26px;margin:5px;color:#6b3a12}
+
+.card{
+background:#fffaf0;
+border-radius:18px;
+padding:15px;
+margin-bottom:15px;
+box-shadow:0 3px 10px rgba(0,0,0,.15);
+}
+
+.rakija{
+background:#fff;
+border-left:6px solid #c8922e;
+padding:15px;
+border-radius:14px;
+margin-top:12px;
+}
+
+label{
+display:block;
+font-weight:bold;
+margin-top:12px;
+}
+
+input{
+width:100%;
+height:52px;
+font-size:18px;
+padding:10px;
+border:1px solid #c8922e;
+border-radius:12px;
+margin-top:5px;
+}
+
+button{
+width:100%;
+height:52px;
+margin-top:15px;
+border:0;
+border-radius:14px;
+background:#6b3a12;
+color:white;
+font-size:17px;
+font-weight:bold;
+}
+
+.delete{
+background:#990000;
+}
+
+.result{
+background:#fff;
+font-size:18px;
+line-height:1.8;
+}
+
+.small{
+text-align:center;
+font-size:12px;
+margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="header">
+<div class="logo">🥃</div>
+<h1>Rakija Optimizer PRO</h1>
+<div>Privatni kalkulator jačine</div>
+</div>
+
+<div class="card">
+<h3>🍶 Moj podrum</h3>
+<div id="lista"></div>
+<button onclick="dodaj()">➕ Dodaj rakiju</button>
+</div>
+
+<div class="card">
+<h3>🎯 Ciljana jačina</h3>
+<label>Željeni postotak alkohola</label>
+<input id="cilj" type="number" inputmode="decimal" value="45" oninput="izracunaj()">
+<button onclick="izracunaj()">🥃 IZRAČUNAJ</button>
+</div>
+
+<div id="rezultat" class="card result">
+Rezultat će biti ovdje.
+</div>
+
+<div class="small">Rakija Optimizer PRO</div>
+
+</div>
+
+<script>
+let podrum=JSON.parse(localStorage.getItem("rakijaPodrum")||"[]");
+
+function save(){
+localStorage.setItem("rakijaPodrum",JSON.stringify(podrum));
+}
+
+function dodaj(){
+podrum.push({naziv:"",litre:"",stupanj:""});
+save();
+prikazi();
+}
+
+function obrisi(i){
+podrum.splice(i,1);
+save();
+prikazi();
+izracunaj();
+}
+
+function promjena(i,p,v){
+podrum[i][p]=v;
+save();
+izracunaj();
+}
+
+function prikazi(){
+let l=document.getElementById("lista");
+l.innerHTML="";
+
+podrum.forEach((r,i)=>{
+l.innerHTML+=`
+<div class="rakija">
+<b>🥃 Rakija ${i+1}</b>
+
+<label>Naziv</label>
+<input value="${r.naziv}" oninput="promjena(${i},'naziv',this.value)">
+
+<label>Količina (L)</label>
+<input type="number" inputmode="decimal" value="${r.litre}" oninput="promjena(${i},'litre',this.value)">
+
+<label>Jačina (%)</label>
+<input type="number" inputmode="decimal" value="${r.stupanj}" oninput="promjena(${i},'stupanj',this.value)">
+
+<button class="delete" onclick="obrisi(${i})">🗑 Obriši</button>
+</div>`;
+});
+}
+
+function izracunaj(){
+let ukupno=0;
+let alkohol=0;
+
+podrum.forEach(r=>{
+let l=parseFloat(r.litre);
+let a=parseFloat(r.stupanj);
+if(!isNaN(l)&&!isNaN(a)){
+ukupno+=l;
+alkohol+=l*a/100;
+}
+});
+
+if(!ukupno){
+rezultat.innerHTML="Nema unesenih podataka.";
+return;
+}
+
+let cilj=parseFloat(document.getElementById("cilj").value);
+let trenutni=alkohol/ukupno*100;
+let voda=cilj<trenutni?(alkohol/(cilj/100))-ukupno:0;
+
+rezultat.innerHTML=
+"🥃 <b>REZULTAT</b><br><br>"+
+"Ukupno: <b>"+ukupno.toFixed(2)+" L</b><br>"+
+"Trenutna jačina: <b>"+trenutni.toFixed(2)+"°</b><br><br>"+
+"💧 Dodati vode: <b>"+voda.toFixed(2)+" L</b>";
+}
+
+prikazi();
+
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("./service-worker.js");
+}
+</script>
+
+</body>
+</html>
